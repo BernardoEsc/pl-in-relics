@@ -1,0 +1,21 @@
+{
+  "categories": [
+    {
+      "id": 0,
+      "name": "Form"
+    },
+    {
+      "id": 1,
+      "name": "Item"
+    },
+    {
+      "id": 2,
+      "name": "Text"
+    }
+  ],
+  "info": {
+    "year": 2026,
+    "version": "1.0",
+    "contributor": "Label Studio"
+  }
+}
