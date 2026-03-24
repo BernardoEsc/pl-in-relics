@@ -1,0 +1,9 @@
+easyocr==1.7.2
+keyboard==0.13.5
+mss==10.1.0
+numpy==2.4.3
+opencv-python==4.13.0.92
+PyQt5==5.15.11
+requests==2.32.5
+torch==2.5.1
+ultralytics==8.4.26

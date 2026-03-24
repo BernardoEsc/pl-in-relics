@@ -1,10 +1,13 @@
 from ultralytics import YOLO
 from difflib import get_close_matches
-import numpy as np
-import mss
 import cv2
 import easyocr
+import json
+import mss
+import numpy as np
+import os
 import requests
+import tempfile
 
 class Extract_pl():
     def __init__(self, lang=['en']):
@@ -12,6 +15,8 @@ class Extract_pl():
         self.__lang__ = lang
         self.__reader__ = easyocr.Reader(self.__lang__, gpu=True)
         self.__translates__ = self.load_items()
+        self.__temp_dir__ = tempfile.TemporaryDirectory()
+        self.__cache_path__ = self.__temp_dir__.name
 
     def show_img(self, img):
         cv2.imshow('img', img)
@@ -32,14 +37,9 @@ class Extract_pl():
         
         return text[:-1].lower().replace("\n", " ")
 
-    def load_items(self):
-        import csv
-        
-        translates = {}
-        with open(f'items/items_{self.__lang__[0]}.csv', newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                translates[row[f'{self.__lang__[0]}']] = row["slug"]
+    def load_items(self):   
+        with open(f'items/items_{self.__lang__[0]}.json', encoding="utf-8") as f:
+            translates = json.load(f)
 
         return translates
 
@@ -49,20 +49,33 @@ class Extract_pl():
             slug = translations[match[0]]
             return slug
 
-    def api_wf(self, text):
-        url = f'https://api.warframe.market/v2/orders/item/{text}/top'
-        try:
-            response = requests.get(url)
-            data = response.json()
-            sellers = data["data"]["sell"]
-            seller = next(
-                (item for item in sellers if item["user"]["status"] == "ingame"),
-                None
-            )
-            if seller:
-                return str(seller["platinum"]) # int -> str
-        except:
-            pass
+    def get_item_price(self, item_name):
+        file_path = os.path.join(self.__cache_path__, f"{item_name}.json")
+
+        if os.path.exists(file_path):
+            with open(file_path, encoding="utf-8") as f:
+                return json.load(f)
+
+        price = self.api_wf(item_name) 
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(price, f, ensure_ascii=False, indent=4)
+            
+        return price
+
+    def api_wf(self, item_name):
+        url = f'https://api.warframe.market/v2/orders/item/{item_name}'
+        response = requests.get(url)
+        
+        data = response.json()
+        orders = data["data"] 
+
+        price = []
+        for order in orders:
+            if order["type"] == "sell":
+                price.append(order["platinum"])
+        price.sort()
+
+        return price[len(price) // 2]   # Median
 
     def pl_detector(self):
         img = self.screenshot()
@@ -81,15 +94,16 @@ class Extract_pl():
                 x1, y1 = int(xyxy[0]), int(xyxy[1])
                 x2, y2 = int(xyxy[2]), int(xyxy[3])
 
-                text_img = img[y1:y2, x1:x2]
-                text_img = cv2.cvtColor(text_img, cv2.COLOR_BGR2GRAY)
+                item_name_img = img[y1:y2, x1:x2]
+                item_name_img = cv2.cvtColor(item_name_img, cv2.COLOR_BGR2GRAY)
                 # show_img(text_img)
 
-                text = self.ocr_easyocr(text_img)
-                text = self.translate(text, self.__translates__)
-                if text:
-                    pl = self.api_wf(text) 
-                    if pl:
-                        results.append( (x1, y1, x2-x1, y2-y1, y2, text, pl) )
+                item_name = self.ocr_easyocr(item_name_img)
+                item_name = self.translate(item_name, self.__translates__)
+                try:
+                    price = self.get_item_price(item_name) 
+                    results.append( (x1, y1, x2-x1, y2-y1, y2, item_name, price) )
+                except:
+                    print("ERROR")
 
         return results

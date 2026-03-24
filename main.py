@@ -1,11 +1,15 @@
+from extract_pl import Extract_pl
+from overlay import Overlay
 from PyQt5 import QtWidgets, QtCore
-import sys
-import os
 import json
 import keyboard
+import os
+import sys
 import threading
 
 CONFIG_FILE = "config.json"
+QUIT_BUTTON = "ctrl+0"
+START_BUTTON = "0"
 
 def close_app():
     QtCore.QMetaObject.invokeMethod(
@@ -14,14 +18,14 @@ def close_app():
         QtCore.Qt.QueuedConnection
     )
 
-def on_press_0():
+def start_scan():
     overlay.trigger.emit([[], 0])
     results = pl.pl_detector()
     overlay.trigger.emit([results, 1])
 
 def keyboard_listener():
-    keyboard.add_hotkey("ctrl+0", close_app)
-    keyboard.add_hotkey("0", on_press_0)
+    keyboard.add_hotkey(QUIT_BUTTON, close_app)
+    keyboard.add_hotkey(START_BUTTON, start_scan)
     keyboard.wait()
 
 def load_config():
@@ -49,11 +53,11 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     lang = load_lang()
-    
-    from extract_pl import Extract_pl
-    from overlay import Overlay
+
     overlay = Overlay()
     pl = Extract_pl(lang)
+
+    print(f'\nPRESS "{START_BUTTON}" TO SCAN THE SCREEN\n')
     
     threading.Thread(target=keyboard_listener, daemon=True).start()
     

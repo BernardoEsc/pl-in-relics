@@ -9,7 +9,7 @@ class Overlay(QtWidgets.QWidget):
         self.__should_draw__ = False
         self.__state__ = -1
         self.__paint_loading__ = 0
-        self.__paint_pl__ = 1
+        self.__paint_info__ = 1
         self.__img__ = QtGui.QPixmap("imgs/pl_search.png")
                                  
         self.setWindowFlags(
@@ -31,9 +31,9 @@ class Overlay(QtWidgets.QWidget):
             return
         if self.__state__ == self.__paint_loading__:
             self.paint_loading()
-        if self.__state__ == self.__paint_pl__:
+        if self.__state__ == self.__paint_info__:
             QtCore.QTimer.singleShot(10000, self.hide_overlay)
-            self.paint_pl()
+            self.paint_info()
     
     def show_overlay(self, show):
         self.__to_paint__ = show[0]
@@ -54,7 +54,7 @@ class Overlay(QtWidgets.QWidget):
         painter.drawPixmap(x, y, self.__img__)
         painter.end()
 
-    def paint_pl(self):
+    def paint_info(self):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
@@ -65,15 +65,15 @@ class Overlay(QtWidgets.QWidget):
         font.setPointSize(12)
         painter.setFont(font)
 
-        for x, y, w, h, z, text, pl in self.__to_paint__:
+        for x, y, w, h, z, item_name, item_price in self.__to_paint__:
             painter.drawRect(x, y, w, h) # detected text
 
-            # background of text
+            # background
             rect1 = QtCore.QRect(x, z, w, 20)
             painter.fillRect(rect1, QtGui.QColor(0, 0, 0, 180))
             rect2 = QtCore.QRect(x, z+20, w, 20)
             painter.fillRect(rect2, QtGui.QColor(0, 0, 0, 180))
 
-            # text
-            painter.drawText(rect1, QtCore.Qt.AlignCenter, text)
-            painter.drawText(rect2, QtCore.Qt.AlignCenter, f'{pl} pl')
+            # info
+            painter.drawText(rect1, QtCore.Qt.AlignCenter, item_name)
+            painter.drawText(rect2, QtCore.Qt.AlignCenter, f'{item_price} pl')
