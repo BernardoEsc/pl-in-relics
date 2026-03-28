@@ -1,40 +1,41 @@
 from extract_pl import Extract_pl
 from overlay import Overlay
 from PyQt5 import QtWidgets, QtCore
+from typing import Dict, List
 import json
 import keyboard
 import os
 import sys
 import threading
 
-CONFIG_FILE = "config.json"
-QUIT_BUTTON = "ctrl+0"
-START_BUTTON = "0"
+CONFIG_FILE: str = "config.json"
+QUIT_BUTTON: str = "ctrl+0"
+START_BUTTON: str = "0"
 
-def close_app():
+def close_app() -> None:
     QtCore.QMetaObject.invokeMethod(
         app,
         "quit",
         QtCore.Qt.QueuedConnection
     )
 
-def start_scan():
+def start_scan() -> None:
     overlay.trigger.emit([[], 0])
     results = pl.pl_detector()
     overlay.trigger.emit([results, 1])
 
-def keyboard_listener():
+def keyboard_listener() -> None:
     keyboard.add_hotkey(QUIT_BUTTON, close_app)
     keyboard.add_hotkey(START_BUTTON, start_scan)
     keyboard.wait()
 
-def load_config():
+def load_config() -> Dict[str, str] | None:
     if not os.path.exists(CONFIG_FILE):
         return None
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def load_lang():
+def load_lang() -> List[str]:
     config = load_config()
 
     if not config or "language" not in config:
@@ -47,17 +48,19 @@ def load_lang():
             sys.exit()
     else:
         lang = config["language"]
+    
     return lang
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
-    lang = load_lang()
+    lang: List[str] = load_lang()
+    print("\nLanguage:", lang[0])
 
     overlay = Overlay()
     pl = Extract_pl(lang)
 
-    print(f'\nPRESS "{START_BUTTON}" TO SCAN THE SCREEN\n')
+    print(f'\nPRESS "{START_BUTTON}" TO GET THE PRICE\n')
     
     threading.Thread(target=keyboard_listener, daemon=True).start()
     

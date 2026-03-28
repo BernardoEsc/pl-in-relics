@@ -30,9 +30,10 @@ and [Git](https://git-scm.com/install/).
 
 ## Usage
 
-Go to `C:\Users\UserName\pl-in-relics\` and run `pl-in-relics.bat`.
-
-If you want to change the language, run `change_language.bat`
+- Go to `C:\Users\UserName\pl-in-relics\` and run `pl-in-relics.bat`.
+- The first time, choose a language.
+- Press "0" to get the price.
+- If you want to change the language, run `change_language.bat`.
 
 
 ---
